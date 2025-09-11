@@ -13,14 +13,10 @@ const userSchema = new mongoose.Schema(
         "L'adresse e-mail doit être valide ex: exemple@domaine.com .",
       ],
     },
-    password :{
+    password: {
       type: String,
       required: true,
-      unique: true,
-      match: [
-        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-        "L'adresse e-mail doit être valide ex: exemple@domaine.com .",
-      ],
+      minlength: 6, 
     },
     
     role: {
@@ -52,5 +48,22 @@ userSchema.pre("save", async function (next) {
     next(error);
   }
 });
+
+userSchema.statics.login = async function (email, password) {
+  const user = await this.findOne({ email });
+
+  if (user) {
+    const auth = await bcrypt.compare(password, user.password);
+
+    if (auth) {
+      return user;
+    } else {
+      throw new Error("password invalid");
+    }
+  } else {
+    throw new Error("email not found");
+  }
+}; 
+
 const User = mongoose.model("User", userSchema);
 module.exports = User;
